@@ -85,7 +85,7 @@ AWS EKS 설치
 7. EKS 구성
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/getting-started-eksctl.html
   EKS요금 시간당 0.01USD  + t3.medium 시간 0.416 *2 USD 입니다.
-  6시간 수업중  점심시간 포함해서 6시간정도 사용하고 삭제할 예정입니다. 1DAY라서 실습장비를 하루 사용하고 삭제할 에정입니다.
+  6시간 수업중  점심시간 포함해서 6시간정도 사용하고 삭제할 예정입니다. 1DAY라서 실습장비를 하루 사용하고 삭제합니다.
   [Managed nodes – Linux] 탭 선택후 사용설명확인
   
   $ aws ec2 create-key-pair --region ap-northeast-2 --key-name k8sKeyPair
