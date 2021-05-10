@@ -1,0 +1,127 @@
+AWS EKS 설치
+
+1. 윈도우 10 에서 WSL(Ubuntu)로 AWSCLI 실행하기
+  1) WSL 설치
+  PowerShell을 관리자 권한으로 실행
+  아래 명령어를 입력한 후 엔터
+  > Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
+
+  설치후에 시스템 리부팅 진행
+
+  2) 마이크로 소프트 스토어에서 "Ubuntu" 설치 후 실행해서 계정생성-> root 계정 패스워드 설정
+  Enter new UNIX username: ubuntu
+  New password: XXXX
+  Retype new password: XXXX
+  passwd: password updated successfully
+  
+  ubuntu $
+
+2. Linux에 AWS CLI 버전 2 설치
+  참고: https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/install-cliv2-linux.html
+  $ apt-get install -y unzip
+  $ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  $ unzip awscliv2.zip
+  $ sudo ./aws/install
+	  You can now run: /usr/local/bin/aws --version
+  $ aws --version
+
+
+3. eksctl 설치
+  참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/eksctl.html
+  $ curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+  $ sudo mv /tmp/eksctl /usr/local/bin
+  $ eksctl version
+  0.48.0
+
+
+4.  kubectl 설치
+  참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/install-kubectl.html
+  $ curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+  $ chmod +x ./kubectl
+  $ mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
+  $ echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
+  $ kubectl version --short --client
+  Client Version: v1.19.6-eks-49a6c0
+
+
+5. AWS IAM 생성하기 
+  링크: aws.amazon.com - root 로그인후 IAM 생성
+  사용자이름 : k8suser-console
+  프로그래밍 방식 선택
+  기존 정책 : administrator
+  태그 추가 - <SKIP>
+  [사용자만들기] 버튼 클릭
+  
+  사용자 생성되면 csv다운로드 -액세스ID/엑세스키
+
+
+
+6. aws 설정하기 : ubuntu에서
+  $ aws configure
+  AWS Access Key ID [None]: AKIASJVPYMLBUB53E37V
+  AWS Secret Access Key [None]: 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
+  Default region name [None]: ap-northeast-2
+  Default output format [None]: <ENTER>
+
+  ubuntu@seongmi_lee:~$ cd .aws/
+  ubuntu@seongmi_lee:~/.aws$ ls
+  ubuntu@seongmi_lee:~/.aws$ cat config
+  [default]
+  region = ap-northeast-2
+  ubuntu@seongmi_lee:~/.aws$ cat credentials
+  [default]
+  aws_access_key_id = AKIASJVPYMLBUB53E37V
+  aws_secret_access_key = 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
+
+  잘 연결되는지 확인
+  ubuntu@seongmi_lee:~/.aws$ aws sts get-caller-identity
+  {
+      "UserId": "AIDASJVPYMLB446UGKS26",
+      "Account": "158208647875",
+      "Arn": "arn:aws:iam::158208647875:user/k8suser-console"
+  }
+
+
+7. EKS 구성
+  참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/getting-started-eksctl.html
+  EKS요금 시간당 0.01USD  + t3.medium 시간 0.416 *2 USD 입니다.
+  6시간 수업중  점심시간 포함해서 6시간정도 사용하고 삭제할 예정입니다. 1DAY라서 실습장비를 하루 사용하고 삭제할 에정입니다.
+  [Managed nodes – Linux] 탭 선택후 사용설명확인
+  
+  $ aws ec2 create-key-pair --region ap-northeast-2 --key-name k8sKeyPair
+  $ eksctl create cluster \
+    --name k8s-demo \
+    --region ap-northeast-2 \
+    --with-oidc \
+    --ssh-access \
+    --ssh-public-key k8sKeyPair \
+    --nodes 3 \
+    --node-type t3.medium \
+    --managed
+
+    참고: Amazon Elastic Kubernetes Service(Amazon EKS)에서 OpenID Connect(OIDC) 호환 자격 증명 공급자를 Kubernetes 클러스터에 대한 사용자 인증 옵션으로 사용할 수 있습니다. OIDC 인증을 사용하면 직원 계정의 생성, 활성화 및 비활성화에 대한 조직의 표준 절차를 사용하여 EKS 클러스터에 대한 사용자 액세스를 관리할 수 있습니다. 
+    https://aws.amazon.com/ko/about-aws/whats-new/2021/02/amazon-eks-clusters-support-user-authentication-oidc-compatible-identity-providers/
+
+
+8. CloudFormation으로 생성되기 때문에 aws에서 cloudformation으로 확인해본다.
+생성되는 시간이 20분정도 걸린다.
+...
+Error: creating node watcher: Get "https://CFFB1D797D55ED325B2FD408B2CB4BF9.yl4.ap-northeast-2.eks.amazonaws.com/api/v1/nodes?labelSelector=alpha.eksctl.io%2Fnodegroup-name%3Dng-326d71b4&watch=true": x509: certificate signed by unknown authority
+에러메시지가 나왔으나. k8s가 아닌 node watcher문제임.
+
+- aws에서 확인 :  CloudFormation 검색 후 확인
+
+- kubectl 명령으로 설치결과 확인
+ubuntu@seongmi_lee:~$ kubectl get nodes
+NAME                                                STATUS   ROLES    AGE   VERSION
+ip-192-168-20-207.ap-northeast-2.compute.internal   Ready    <none>   39m   v1.19.6-eks-49a6c0
+ip-192-168-60-125.ap-northeast-2.compute.internal   Ready    <none>   39m   v1.19.6-eks-49a6c0
+ip-192-168-95-167.ap-northeast-2.compute.internal   Ready    <none>   39m   v1.19.6-eks-49a6c0
+
+CLI 명령어 완성기능 추가
+source <(kubectl completion bash)
+echo "source <(kubectl completion bash)" >> ~/.bashrc
+
+
+9. 모든 실습이 끝나면 EKS를 삭제
+  $ eksctl delete cluster --name k8s-demo
