@@ -18,7 +18,7 @@ AWS EKS 설치
 
 2. Linux에 AWS CLI 버전 2 설치
   참고: https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/install-cliv2-linux.html
-  $ apt-get install -y unzip
+  $ sudo apt-get install -y unzip
   $ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
   $ unzip awscliv2.zip
   $ sudo ./aws/install
