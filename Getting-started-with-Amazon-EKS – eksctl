@@ -58,8 +58,8 @@ AWS EKS 설치
 
 6. aws 설정하기 : ubuntu에서
   $ aws configure
-  AWS Access Key ID [None]: AKIASJVPYMLBUB53E37V
-  AWS Secret Access Key [None]: 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
+  AWS Access Key ID [None]: AKIASJ...E37V
+  AWS Secret Access Key [None]: XLzhAqt...7g
   Default region name [None]: ap-northeast-2
   Default output format [None]: <ENTER>
 
@@ -70,8 +70,8 @@ AWS EKS 설치
   region = ap-northeast-2
   ubuntu@seongmi_lee:~/.aws$ cat credentials
   [default]
-  aws_access_key_id = AKIASJVPYMLBUB53E37V
-  aws_secret_access_key = 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
+  aws_access_key_id = AKIASJ...E37V
+  aws_secret_access_key = XLzhAq...7g
 
   잘 연결되는지 확인
   ubuntu@seongmi_lee:~/.aws$ aws sts get-caller-identity
