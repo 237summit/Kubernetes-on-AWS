@@ -46,11 +46,11 @@ AWS EKS 설치
 
 5. AWS IAM 생성하기 
   링크: aws.amazon.com - root 로그인후 IAM 생성
-  사용자이름 : k8suser-console
-  프로그래밍 방식 선택
-  기존 정책 : administrator
-  태그 추가 - <SKIP>
-  [사용자만들기] 버튼 클릭
+  사용자이름(User name*) : k8suser-console
+  프로그래밍 방식(Programmatic access) 선택
+  기존 정책(Attach existing policies directly) : administrator
+  태그 추가(Add tags (optional)) - <SKIP>
+  [사용자만들기(Create User)] 버튼 클릭
   
   사용자 생성되면 csv다운로드 -액세스ID/엑세스키
 
