@@ -24,14 +24,14 @@ AWS EKS 설치
   $ sudo ./aws/install
 	  You can now run: /usr/local/bin/aws --version
   $ aws --version
-
+  aws-cli/2.2.5 Python/3.8.8 Linux/4.4.0-19041-Microsoft exe/x86_64.ubuntu.20 prompt/off
 
 3. eksctl 설치
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/eksctl.html
   $ curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
   $ sudo mv /tmp/eksctl /usr/local/bin
   $ eksctl version
-  0.48.0
+  0.50.0
 
 
 4.  kubectl 설치
@@ -82,12 +82,15 @@ AWS EKS 설치
   }
 
 
-7. EKS 구성
+7. EC2 연결을 위한 키를 생성한다.
+ 방법1: AWS에서 ssh를 생성하거나 아래의 명령을 실행해 demo-k8skey 키를 생성한다. 키 생성시 만들어지는 pem은 잘 저장한후 ssh 접속시 사용한다.
+ 방법2: aws ec2 create-key-pair --region ap-northeast-2 --key-name demo-k8skey --output text > demo-k8skey.pem
+
+8. EKS 구성
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/getting-started-eksctl.html
   EKS요금 시간당 0.01USD  + t3.medium 시간 0.416 *2 USD 입니다.
   [Managed nodes – Linux] 탭 선택후 사용설명확인
-  
-  $ aws ec2 create-key-pair --region ap-northeast-2 --key-name demo-k8skey
+ eksctl 명령을 실행해서 Amazon EKS 클러스터를 생성한다.  
   $ eksctl create cluster \
     --name k8s-demo \
     --region ap-northeast-2 \
@@ -105,22 +108,67 @@ AWS EKS 설치
 8. CloudFormation으로 생성되기 때문에 aws에서 cloudformation으로 확인해본다.
 생성되는 시간이 20분정도 걸린다.
 ...
-Error: creating node watcher: Get "https://CFFB1D797D55ED325B2FD408B2CB4BF9.yl4.ap-northeast-2.eks.amazonaws.com/api/v1/nodes?labelSelector=alpha.eksctl.io%2Fnodegroup-name%3Dng-326d71b4&watch=true": x509: certificate signed by unknown authority
-에러메시지가 나왔으나. k8s가 아닌 node watcher문제임.
+2021-05-19 06:04:39 [ℹ]  eksctl version 0.50.0
+2021-05-19 06:04:39 [ℹ]  using region ap-northeast-2
+2021-05-19 06:04:39 [ℹ]  setting availability zones to [ap-northeast-2a ap-northeast-2b ap-northeast-2c]
+2021-05-19 06:04:39 [ℹ]  subnets for ap-northeast-2a - public:192.168.0.0/19 private:192.168.96.0/19
+2021-05-19 06:04:39 [ℹ]  subnets for ap-northeast-2b - public:192.168.32.0/19 private:192.168.128.0/19
+2021-05-19 06:04:39 [ℹ]  subnets for ap-northeast-2c - public:192.168.64.0/19 private:192.168.160.0/19
+2021-05-19 06:04:39 [ℹ]  using EC2 key pair %!q(*string=<nil>)
+2021-05-19 06:04:39 [ℹ]  using Kubernetes version 1.19
+2021-05-19 06:04:39 [ℹ]  creating EKS cluster "k8s-demo" in "ap-northeast-2" region with managed nodes
+2021-05-19 06:04:39 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+2021-05-19 06:04:39 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=ap-northeast-2 --cluster=k8s-demo'
+2021-05-19 06:04:39 [ℹ]  CloudWatch logging will not be enabled for cluster "k8s-demo" in "ap-northeast-2"
+2021-05-19 06:04:39 [ℹ]  you can enable it with 'eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=ap-northeast-2 --cluster=k8s-demo'
+...
+2021-05-19 07:09:28 [✔]  saved kubeconfig as "/home/ubuntu/.kube/config"
+2021-05-19 07:09:28 [ℹ]  no tasks
+2021-05-19 07:09:28 [✔]  all EKS cluster resources for "k8s-demo" have been created
+2021-05-19 07:09:29 [ℹ]  nodegroup "ng-343b6807" has 3 node(s)
+2021-05-19 07:09:29 [ℹ]  node "ip-192-168-38-198.ap-northeast-2.compute.internal" is ready
+2021-05-19 07:09:29 [ℹ]  node "ip-192-168-4-22.ap-northeast-2.compute.internal" is ready
+2021-05-19 07:09:29 [ℹ]  node "ip-192-168-82-229.ap-northeast-2.compute.internal" is ready
+2021-05-19 07:09:29 [ℹ]  waiting for at least 3 node(s) to become ready in "ng-343b6807"
+2021-05-19 07:09:29 [ℹ]  nodegroup "ng-343b6807" has 3 node(s)
+2021-05-19 07:09:29 [ℹ]  node "ip-192-168-38-198.ap-northeast-2.compute.internal" is ready
+2021-05-19 07:09:29 [ℹ]  node "ip-192-168-4-22.ap-northeast-2.compute.internal" is ready
+2021-05-19 07:09:29 [ℹ]  node "ip-192-168-82-229.ap-northeast-2.compute.internal" is ready
+2021-05-19 07:09:32 [ℹ]  kubectl command should work with "/home/ubuntu/.kube/config", try 'kubectl get nodes'
+2021-05-19 07:09:32 [✔]  EKS cluster "k8s-demo" in "ap-northeast-2" region is ready
+
 
 - aws에서 확인 :  CloudFormation 검색 후 확인
 
 - kubectl 명령으로 설치결과 확인
-ubuntu@seongmi_lee:~$ kubectl get nodes
+$ kubectl get nodes
 NAME                                                STATUS   ROLES    AGE   VERSION
-ip-192-168-20-207.ap-northeast-2.compute.internal   Ready    <none>   39m   v1.19.6-eks-49a6c0
-ip-192-168-60-125.ap-northeast-2.compute.internal   Ready    <none>   39m   v1.19.6-eks-49a6c0
-ip-192-168-95-167.ap-northeast-2.compute.internal   Ready    <none>   39m   v1.19.6-eks-49a6c0
+ip-192-168-38-198.ap-northeast-2.compute.internal   Ready    <none>   28m   v1.19.6-eks-49a6c0
+ip-192-168-4-22.ap-northeast-2.compute.internal     Ready    <none>   28m   v1.19.6-eks-49a6c0
+ip-192-168-82-229.ap-northeast-2.compute.internal   Ready    <none>   28m   v1.19.6-eks-49a6c0
+
 
 CLI 명령어 완성기능 추가
-source <(kubectl completion bash)
-echo "source <(kubectl completion bash)" >> ~/.bashrc
+$ source <(kubectl completion bash)
+$ echo "source <(kubectl completion bash)" >> ~/.bashrc
+
+
+9. 간단한 실행 실습
+$ kubectl get nodes -o wide
+
+Pod 배포 TEST
+$ kubectl create  deployment webtest --image=nginx:1.14 --port=80  --replicas=5
+$ kubectl get  pods -o wide
+NAME                      READY   STATUS    RESTARTS   AGE   IP               NODE                                               NOMINATED NODE   READINESS GATES
+webtest-fdf54587f-8mfrz   1/1     Running   0          28s   192.168.10.139   ip-192-168-2-91.ap-northeast-2.compute.internal    <none>           <none>
+webtest-fdf54587f-d4pjc   1/1     Running   0          28s   192.168.39.104   ip-192-168-56-22.ap-northeast-2.compute.internal   <none>           <none>
+webtest-fdf54587f-dqg55   1/1     Running   0          28s   192.168.13.27    ip-192-168-2-91.ap-northeast-2.compute.internal    <none>           <none>
+webtest-fdf54587f-hs8zd   1/1     Running   0          28s   192.168.77.185   ip-192-168-70-30.ap-northeast-2.compute.internal   <none>           <none>
+webtest-fdf54587f-pn549   1/1     Running   0          28s   192.168.83.249   ip-192-168-70-30.ap-northeast-2.compute.internal   <none>           <none>
+
+외부 접속 TEST
+$ kubectl expose deployment  webtest --port=80 --type=NodePort
 
 
 9. 모든 실습이 끝나면 EKS를 삭제
-  $ eksctl delete cluster --name k8s-demo
+$ eksctl delete cluster --name k8s-demo
