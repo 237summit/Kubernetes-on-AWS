@@ -1,0 +1,24 @@
+1. 생성된 EKS 인프라를 확인하고 컨테이너를 배포합니다.
+1) 운영중인 인프라 확인
+worker node로 동작중인 생성된 Instances 정보보기
+$ kubectl get nodes
+$ kubectl get nodes -o wide
+현재 동작중인 CNI의 버전은?
+$ kubectl describe daemonset aws-node --namespace kube-system | grep Image | cut -d "/" -f 2
+
+2) web service deploy
+webtest 라는 이름으로 웹서버 pod 5개 배포하고, 어느 노드에서 실행중인지 확인해본다.
+$ kubectl create  deployment webtest --image=nginx:1.14 --port=80  --replicas=5
+$ kubectl get pods -o wide
+
+3) service api를 통한 외부 접속 TEST 
+웹서비스 동작을 확인해본다.
+$ kubectl expose deployment  webtest --port=80 --type=NodePort
+$ kubectl get svc
+Amazon EKS 에서 특정 워크노드를 골라 방화벽 포트를 열어서 확인해본다.
+
+4) service와 deploy를 삭제
+$ kubectl delete  deployments.apps webtest
+$ kubectl delete svc webtest
+
+2. 
