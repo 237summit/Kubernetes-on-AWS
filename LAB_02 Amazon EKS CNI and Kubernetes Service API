@@ -3,8 +3,10 @@
 worker node로 동작중인 생성된 Instances 정보보기
 $ kubectl get nodes
 $ kubectl get nodes -o wide
+
 현재 동작중인 CNI의 버전은?
 $ kubectl describe daemonset aws-node --namespace kube-system | grep Image | cut -d "/" -f 2
+$ kubectl get pods -n kube-system
 
 2) web service deploy
 webtest 라는 이름으로 웹서버 pod 5개 배포하고, 어느 노드에서 실행중인지 확인해본다.
@@ -21,4 +23,24 @@ Amazon EKS 에서 특정 워크노드를 골라 방화벽 포트를 열어서 �
 $ kubectl delete  deployments.apps webtest
 $ kubectl delete svc webtest
 
-2. 
+2. kube-proxy
+Kubernetes service 동작 시 실제 kube-proxy는 어떻게 동작되나?
+
+1) Kubernetes Service 동작하기
+$ cat deployment-webui.yaml
+$ cat svc-webui.yaml
+$ kubectl create -f deployment-webui.yaml
+$ kubectl create -f svc-webui.yaml
+$ kubectl get all
+
+2) kube-proxy 동작상태 보기
+worker node에 kube-proxy가 동작중인가?
+$ kubectl get pod -n kube-system -o wide | grep kube-proxy
+
+kubeproy가 하는일은? worker node에서 확인
+EC2$ sudo iptables -t nat -S | grep 80
+
+3) service와 deploy를 삭제
+$ kubectl delete  deployments.apps webui
+$ kubectl delete svc webui-svc
+
