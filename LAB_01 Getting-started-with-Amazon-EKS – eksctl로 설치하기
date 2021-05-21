@@ -172,3 +172,16 @@ $ kubectl expose deployment  webtest --port=80 --type=NodePort
 
 9. 모든 실습이 끝나면 EKS를 삭제
 $ eksctl delete cluster --name k8s-demo
+2021-05-21 18:39:08 [ℹ]  eksctl version 0.50.0
+2021-05-21 18:39:08 [ℹ]  using region ap-northeast-2
+2021-05-21 18:39:08 [ℹ]  deleting EKS cluster "k8s-demo"
+2021-05-21 18:39:08 [ℹ]  deleted 0 Fargate profile(s)
+2021-05-21 18:39:09 [✔]  kubeconfig has been updated
+2021-05-21 18:39:09 [ℹ]  cleaning up AWS load balancers created by Kubernetes objects of Kind Service or Ingress
+...
+2021-05-21 18:42:37 [ℹ]  waiting for CloudFormation stack "eksctl-k8s-demo-addon-iamserviceaccount-kube-system-aws-node"
+2021-05-21 18:42:55 [ℹ]  waiting for CloudFormation stack "eksctl-k8s-demo-addon-iamserviceaccount-kube-system-aws-node"
+2021-05-21 18:42:55 [ℹ]  deleted serviceaccount "kube-system/aws-node"
+2021-05-21 18:42:56 [ℹ]  will delete stack "eksctl-k8s-demo-cluster"
+2021-05-21 18:42:56 [✔]  all cluster resources were deleted
+
