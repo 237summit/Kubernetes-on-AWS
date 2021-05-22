@@ -46,7 +46,7 @@ AWS EKS 설치
 
 5. AWS IAM 생성하기 
   링크: aws.amazon.com - root 로그인후 IAM 생성
-  사용자이름(User name*) : k8suser-console
+  사용자이름(User name*) : test-user
   프로그래밍 방식(Programmatic access) 선택
   기존 정책(Attach existing policies directly) : administrator
   태그 추가(Add tags (optional)) - <SKIP>
@@ -76,15 +76,15 @@ AWS EKS 설치
   잘 연결되는지 확인
   ubuntu@seongmi_lee:~/.aws$ aws sts get-caller-identity
   {
-      "UserId": "AIDASJVPYMLB446UGKS26",
-      "Account": "158208647875",
+      "UserId": "AID...KS26",
+      "Account": "15..75",
       "Arn": "arn:aws:iam::158208647875:user/k8suser-console"
   }
 
 
 7. EC2 연결을 위한 키를 생성한다.
- 방법1: AWS에서 ssh를 생성하거나 아래의 명령을 실행해 demo-k8skey 키를 생성한다. 키 생성시 만들어지는 pem은 잘 저장한후 ssh 접속시 사용한다.
- 방법2: aws ec2 create-key-pair --region ap-northeast-2 --key-name demo-k8skey --output text > demo-k8skey.pem
+ 방법1: AWS에서 ssh를 생성하거나 아래의 명령을 실행해 test-k8skey 키를 생성한다. 키 생성시 만들어지는 pem은 잘 저장한후 ssh 접속시 사용한다.
+ 방법2: aws ec2 create-key-pair --region ap-northeast-2 --key-name test-k8skey --output text > test-k8skey.pem
 
 8. EKS 구성
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/getting-started-eksctl.html
@@ -96,7 +96,7 @@ AWS EKS 설치
     --region ap-northeast-2 \
     --with-oidc \
     --ssh-access \
-    --ssh-public-key demo-k8skey \
+    --ssh-public-key test-k8skey \
     --nodes 3 \
     --node-type t3.medium \
     --managed
