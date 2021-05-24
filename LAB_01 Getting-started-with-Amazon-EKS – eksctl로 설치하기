@@ -170,7 +170,7 @@ webtest-fdf54587f-pn549   1/1     Running   0          28s   192.168.83.249   ip
 $ kubectl expose deployment  webtest --port=80 --type=NodePort
 
 
-9. 모든 실습이 끝나면 EKS를 삭제
+10. 모든 실습이 끝나면 EKS를 삭제
 $ eksctl delete cluster --name k8s-demo
 2021-05-21 18:39:08 [ℹ]  eksctl version 0.50.0
 2021-05-21 18:39:08 [ℹ]  using region ap-northeast-2
