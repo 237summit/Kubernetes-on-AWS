@@ -1,0 +1,230 @@
+1. emptyDir을 사용하는 multi-pod
+1) smlinux/cowsay-web:latest
+• nginx 웹 서버가 서비스할 web content를 생성하는 컨테이너 
+• fortune을 실행해서 5초에 한번씩 /webdata/index.html 문서를 갱신
+
+2) cowsay-web Pod는 cowsay-web 컨테이너가 생성한 web content를 nginx 컨테이너가 80포트를 통해 서비스 하도록 multi-container POD를 구성하였다. 아래와 같이 두개의 컨테이너가 공유 스토리지를 사용하도록 서비스를 생성해보자.
+$ kubectl create -f volume-empty.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dynamic-web
+spec:
+  containers:
+  - image: smlinux/cowsay-web
+    name: web-generator
+    volumeMounts:
+    - name: html
+      mountPath: /webdata
+
+  - image: nginx:1.14
+    name: web-server
+    volumeMounts:
+    - name: html
+      mountPath: /usr/share/nginx/html
+      readOnly: true
+    ports:
+    - containerPort: 80
+
+  volumes:
+  - name: html
+    emptyDir: {}
+
+3) cowsay-web 포드의 IP 주소로 접속하여 서비스 실행 결과를 확인해보자.
+$ kubectl  get pods -o wide
+$ curl <IP_Address>
+
+
+4) 생성된 Pod의 세부 정보를 통해 마운트 상태를 확인해보자. 두 개의 컨테이너는 emptyDir로 정의된 임시 저장소를 각자 마운트하여 사용하고 있다. 
+$ kubectl describe pod dynamic-web
+
+
+5) dynamic-web Pod내의 web-server 컨테이너의 마운트 디렉토리를 사용해보자. touch 명령으로 파일을 생성할 수 있는가? 
+$ kubectl exec dynamic-web -c web-server -- ls /usr/share/nginx/html
+$ kubectl exec dynamic-web -c web-server -- touch /usr/share/nginx/html/test.html
+
+
+6) fortune-cowsay-web 컨테이너는 mount를 RW가능하도록 설정하였다. 동일하게 touch 명령으로 파일이 생성되는지 확인해보자.
+$ kubectl exec dynamic-web -c web-generator -- touch /webdata/test.txt
+$ kubectl exec dynamic-web -c web-generator -- ls /webdata/
+
+
+7) emptyDir은 Pod가 실행되는 Node의 임시 디렉토리를 통해 volume을 운영한다. 아래의 명령을 통해 Pod에서 emptyDir의 상태를 확인해보자. 
+$ kubectl exec dynamic-web -it -c web-generator -- /bin/bash
+/# df -h
+/# mount | grep webdata
+/dev/mapper/centos-root on /webdata type xfs (rw,relatime,seclabel,attr2,inode64,noquota)
+
+/# exit
+
+
+8) 생성한 Pod를 제거하자.
+$ kubectl delete pod dynamic-web
+
+
+########################################
+2  HostPath를 사용하는 Pod 운영
+fluentd는 루비 기반으로 개발되었고, 다양한 플러그인 들을 사용할 수 있는 로그 수집기로  쿠버네티스가 아닌 환경에서도 많이 사용된다. CNCF 재단에 속해 있는 범용 로그 수집용 오픈소스 프로젝트이며 로그를 수집해서 다양한 외부 저장소로 보낼 수 있도록 되어 있지만 아래 예제는 쿠버네티스에서 발생한 로그들을 수집해서 elasticsearch로 저장하도록 하고 있다.
+https://github.com/fluent/fluentd-kubernetes-daemonset에서 쿠버네티스 배포용 yaml 파일 정보를 볼 수 있다. 
+
+1) volume-hostpath-fluentd.yaml을 보면 알 수 있듯이 node마다 동작하는 daemonSet 컨트롤러에 의해 운영되며, hostPath를 통해 docker의 로그 디렉토리를 fluented에게 전달하였다. 노드에서 실제 로그가 쌓이는 위치인 /var/log와 /var/lib/docker/containers를 볼륨으로 마운트 하여 시스템용 프로세스들의 로그를 수집한다. 특히 /var/lib/docker/containers에는 쿠버네티스에 띄워진 Pod들이 출력하는 로그가 쌓인다. 
+$ cat volume-hostpath-fluentd.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-elasticsearch
+  namespace: kube-system
+  labels:
+    k8s-app: fluentd-logging
+spec:
+  selector:
+    matchLabels:
+      name: fluentd-elasticsearch
+  template:
+    metadata:
+      labels:
+        name: fluentd-elasticsearch
+    spec:
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+
+      containers:
+      - name: fluentd-elasticsearch
+        image: quay.io/fluentd_elasticsearch/fluentd:v2.5.2
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+
+$ kubectl create -f volume-hostpath-fluentd.yaml
+
+
+2) kubectl get pods -o wide 명령으로 확인하면 동작중인 node에 Pod가 생성되었다. 
+$ kubectl get pods -o wide -n kube-system
+
+
+3) pod 들이 마운트 상태를 확인해보자.
+$ kubectl describe pod -n kube-system fluentd-elasticsearch-XXX
+...
+    Environment:  <none>
+    Mounts:
+      /var/lib/docker/containers from varlibdockercontainers (ro)
+      /var/log from varlog (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-4b4z5 (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             True
+  ContainersReady   True
+  PodScheduled      True
+Volumes:
+  varlog:
+    Type:          HostPath (bare host directory volume)
+    Path:          /var/log
+    HostPathType:
+  varlibdockercontainers:
+    Type:          HostPath (bare host directory volume)
+    Path:          /var/lib/docker/containers
+    HostPathType:
+  default-token-4b4z5:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  default-token-4b4z5
+    Optional:    false
+
+
+4) fluentd 포드에 들어가서 실제로 거기에 로그가 쌓이고 있는지 확인해보자.
+$ kubectl exec -n kube-system -it fluentd-elasticsearch-2dqfp -- bash
+/# ls /var/log 
+/# ls /var/lib/docker/containers
+/# exit
+
+
+########################################
+3. AWS EBS를 이용한 서비스 : nodeSelector
+
+
+
+########################################
+3. NFS 볼륨 사용예
+nginx web 서비스를 배포하는데, Pod 확장 시에도 동일 웹페이지를 서비스 할 수 있도록 구성해 보자.
+1) NFS server에는 web content가 저장되어 있다. 
+다음과 같은 명령을 실행하여 NFS 공유 스토리지에 저장된 web content를 확인해보라.
+$ cat /sharedir/webdata/index.html
+<h1>TEST WEB</h1>
+
+2) NFS server가 제공하는 공유 스토리지를 사용하는 nginx 웹 서버를 배포하자.
+$ cat volume-nfs.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - image: nginx:1.14
+        name: nginx-container
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html
+          name: html
+
+      volumes:
+      - name: html
+        nfs:
+          server: 10.100.0.254
+          path: /sharedir/webdata
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-svc
+spec:
+  selector:
+    app: web
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  type: LoadBalancer
+  
+$ kubectl create -f volume-nfs.yaml 
+
+3) 동작되는 Pod의 마운트 상태를 확인해보자.
+$ kubectl get pods
+$ kubectl describe pod web-server-85586c86c5-tvjrw
+
+4) Service IP를 통해 공유 스토리지의 컨텐츠를 제공하는지 확인해보자.
+$ kubectl get pod -o wide
+
+5) kubectl scale 명령을 통해 Pod 개수를 확장 및 축소했을 때도 동일한 웹페이지가 서비스되는지 확인해보자.
+
+
+########################################
+4. PersistentVolume, PersistentVolumeClaim 사용
+1) pvc 생성하기
