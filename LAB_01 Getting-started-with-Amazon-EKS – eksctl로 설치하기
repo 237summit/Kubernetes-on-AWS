@@ -99,47 +99,49 @@ AWS EKS 설치
     --ssh-public-key demo-k8skey \
     --nodes 3 \
     --node-type t3.medium \
+    --node-volume-size=20 \
     --managed
-
+    
     참고: Amazon Elastic Kubernetes Service(Amazon EKS)에서 OpenID Connect(OIDC) 호환 자격 증명 공급자를 Kubernetes 클러스터에 대한 사용자 인증 옵션으로 사용할 수 있습니다. OIDC 인증을 사용하면 직원 계정의 생성, 활성화 및 비활성화에 대한 조직의 표준 절차를 사용하여 EKS 클러스터에 대한 사용자 액세스를 관리할 수 있습니다. 
     https://aws.amazon.com/ko/about-aws/whats-new/2021/02/amazon-eks-clusters-support-user-authentication-oidc-compatible-identity-providers/
 
 
-8. CloudFormation으로 생성되기 때문에 aws에서 cloudformation으로 확인해본다.
-생성되는 시간이 20분정도 걸린다.
-...
-2021-05-19 06:04:39 [ℹ]  eksctl version 0.50.0
-2021-05-19 06:04:39 [ℹ]  using region ap-northeast-2
-2021-05-19 06:04:39 [ℹ]  setting availability zones to [ap-northeast-2a ap-northeast-2b ap-northeast-2c]
-2021-05-19 06:04:39 [ℹ]  subnets for ap-northeast-2a - public:192.168.0.0/19 private:192.168.96.0/19
-2021-05-19 06:04:39 [ℹ]  subnets for ap-northeast-2b - public:192.168.32.0/19 private:192.168.128.0/19
-2021-05-19 06:04:39 [ℹ]  subnets for ap-northeast-2c - public:192.168.64.0/19 private:192.168.160.0/19
-2021-05-19 06:04:39 [ℹ]  using EC2 key pair %!q(*string=<nil>)
-2021-05-19 06:04:39 [ℹ]  using Kubernetes version 1.19
-2021-05-19 06:04:39 [ℹ]  creating EKS cluster "k8s-demo" in "ap-northeast-2" region with managed nodes
-2021-05-19 06:04:39 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
-2021-05-19 06:04:39 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=ap-northeast-2 --cluster=k8s-demo'
-2021-05-19 06:04:39 [ℹ]  CloudWatch logging will not be enabled for cluster "k8s-demo" in "ap-northeast-2"
-2021-05-19 06:04:39 [ℹ]  you can enable it with 'eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=ap-northeast-2 --cluster=k8s-demo'
-...
-2021-05-19 07:09:28 [✔]  saved kubeconfig as "/home/ubuntu/.kube/config"
-2021-05-19 07:09:28 [ℹ]  no tasks
-2021-05-19 07:09:28 [✔]  all EKS cluster resources for "k8s-demo" have been created
-2021-05-19 07:09:29 [ℹ]  nodegroup "ng-343b6807" has 3 node(s)
-2021-05-19 07:09:29 [ℹ]  node "ip-192-168-38-198.ap-northeast-2.compute.internal" is ready
-2021-05-19 07:09:29 [ℹ]  node "ip-192-168-4-22.ap-northeast-2.compute.internal" is ready
-2021-05-19 07:09:29 [ℹ]  node "ip-192-168-82-229.ap-northeast-2.compute.internal" is ready
-2021-05-19 07:09:29 [ℹ]  waiting for at least 3 node(s) to become ready in "ng-343b6807"
-2021-05-19 07:09:29 [ℹ]  nodegroup "ng-343b6807" has 3 node(s)
-2021-05-19 07:09:29 [ℹ]  node "ip-192-168-38-198.ap-northeast-2.compute.internal" is ready
-2021-05-19 07:09:29 [ℹ]  node "ip-192-168-4-22.ap-northeast-2.compute.internal" is ready
-2021-05-19 07:09:29 [ℹ]  node "ip-192-168-82-229.ap-northeast-2.compute.internal" is ready
-2021-05-19 07:09:32 [ℹ]  kubectl command should work with "/home/ubuntu/.kube/config", try 'kubectl get nodes'
-2021-05-19 07:09:32 [✔]  EKS cluster "k8s-demo" in "ap-northeast-2" region is ready
+   CloudFormation으로 생성되기 때문에 aws에서 cloudformation으로 확인해본다.
+   생성되는 시간이 20분정도 걸린다.
+	...
+	2021-05-19 06:04:39 [ℹ]  eksctl version 0.50.0
+	2021-05-19 06:04:39 [ℹ]  using region ap-northeast-2
+	2021-05-19 06:04:39 [ℹ]  setting availability zones to [ap-northeast-2a ap-northeast-2b ap-northeast-2c]
+	2021-05-19 06:04:39 [ℹ]  subnets for ap-northeast-2a - public:192.168.0.0/19 private:192.168.96.0/19
+	2021-05-19 06:04:39 [ℹ]  subnets for ap-northeast-2b - public:192.168.32.0/19 private:192.168.128.0/19
+	2021-05-19 06:04:39 [ℹ]  subnets for ap-northeast-2c - public:192.168.64.0/19 private:192.168.160.0/19
+	2021-05-19 06:04:39 [ℹ]  using EC2 key pair %!q(*string=<nil>)
+	2021-05-19 06:04:39 [ℹ]  using Kubernetes version 1.19
+	2021-05-19 06:04:39 [ℹ]  creating EKS cluster "k8s-demo" in "ap-northeast-2" region with managed nodes
+	2021-05-19 06:04:39 [ℹ]  will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup
+	2021-05-19 06:04:39 [ℹ]  if you encounter any issues, check CloudFormation console or try 'eksctl utils describe-stacks --region=ap-northeast-2 --cluster=k8s-demo'
+	2021-05-19 06:04:39 [ℹ]  CloudWatch logging will not be enabled for cluster "k8s-demo" in "ap-northeast-2"
+	2021-05-19 06:04:39 [ℹ]  you can enable it with 'eksctl utils update-cluster-logging --enable-types={SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)} --region=ap-northeast-2 --cluster=k8s-demo'
+	...
+	2021-05-19 07:09:28 [✔]  saved kubeconfig as "/home/ubuntu/.kube/config"
+	2021-05-19 07:09:28 [ℹ]  no tasks
+	2021-05-19 07:09:28 [✔]  all EKS cluster resources for "k8s-demo" have been created
+	2021-05-19 07:09:29 [ℹ]  nodegroup "ng-343b6807" has 3 node(s)
+	2021-05-19 07:09:29 [ℹ]  node "ip-192-168-38-198.ap-northeast-2.compute.internal" is ready
+	2021-05-19 07:09:29 [ℹ]  node "ip-192-168-4-22.ap-northeast-2.compute.internal" is ready
+	2021-05-19 07:09:29 [ℹ]  node "ip-192-168-82-229.ap-northeast-2.compute.internal" is ready
+	2021-05-19 07:09:29 [ℹ]  waiting for at least 3 node(s) to become ready in "ng-343b6807"
+	2021-05-19 07:09:29 [ℹ]  nodegroup "ng-343b6807" has 3 node(s)
+	2021-05-19 07:09:29 [ℹ]  node "ip-192-168-38-198.ap-northeast-2.compute.internal" is ready
+	2021-05-19 07:09:29 [ℹ]  node "ip-192-168-4-22.ap-northeast-2.compute.internal" is ready
+	2021-05-19 07:09:29 [ℹ]  node "ip-192-168-82-229.ap-northeast-2.compute.internal" is ready
+	2021-05-19 07:09:32 [ℹ]  kubectl command should work with "/home/ubuntu/.kube/config", try 'kubectl get nodes'
+	2021-05-19 07:09:32 [✔]  EKS cluster "k8s-demo" in "ap-northeast-2" region is ready
 
 
-- aws에서 확인 :  CloudFormation 검색 후 확인
+	- aws에서 확인 :  CloudFormation 검색 후 확인
 
+9. 설치완료되면 다음과 같이 설치 결과 확인하고, CLI 명령어 자동완성 기능을 추가
 - kubectl 명령으로 설치결과 확인
 $ kubectl get nodes
 NAME                                                STATUS   ROLES    AGE   VERSION
@@ -153,10 +155,11 @@ $ source <(kubectl completion bash)
 $ echo "source <(kubectl completion bash)" >> ~/.bashrc
 
 
-9. 간단한 실행 실습
+10. 간단한 실행 실습
+워커 노드 정보 보기
 $ kubectl get nodes -o wide
 
-Pod 배포 TEST
+Pod 배포 TEST. nginx 컨테이너 5개 실행하고 결과 확인
 $ kubectl create  deployment webtest --image=nginx:1.14 --port=80  --replicas=5
 $ kubectl get  pods -o wide
 NAME                      READY   STATUS    RESTARTS   AGE   IP               NODE                                               NOMINATED NODE   READINESS GATES
@@ -166,11 +169,20 @@ webtest-fdf54587f-dqg55   1/1     Running   0          28s   192.168.13.27    ip
 webtest-fdf54587f-hs8zd   1/1     Running   0          28s   192.168.77.185   ip-192-168-70-30.ap-northeast-2.compute.internal   <none>           <none>
 webtest-fdf54587f-pn549   1/1     Running   0          28s   192.168.83.249   ip-192-168-70-30.ap-northeast-2.compute.internal   <none>           <none>
 
-외부 접속 TEST
-$ kubectl expose deployment  webtest --port=80 --type=NodePort
+nginx 웹서버에 클라이언트 접속 가능하도록 구성하고 간단히 TEST
+$ kubectl expose deployment  webtest --port=80 --type=LoadBalancer
+$ kubectl get services
+$ kubectl get services
+NAME         TYPE           CLUSTER-IP      EXTERNAL-IP                                                                    PORT(S)        AGE
+kubernetes   ClusterIP      10.100.0.1      <none>                                                                         443/TCP        33h
+webtest      LoadBalancer   10.100.222.89   ab5190278c9ac491cb45a4bc42a6d689-1608401336.ap-northeast-2.elb.amazonaws.com   80:30331/TCP   31s
+
+1분정도 후에 웹브라우저를 통해 웹서버 연결되는지 확인
+http://ab5190278c9ac491cb45a4bc42a6d689-1608401336.ap-northeast-2.elb.amazonaws.com
 
 
-10. 모든 실습이 끝나면 EKS를 삭제
+
+11. 모든 실습이 끝났고, 더이상 EKS 사용하지 않는다면 아래 명령으로 삭제. 삭제하지 않고 두면???? 음.. 나중에 깜딱 놀랄수도 있어요~ EKS, EC2 모두 과금됩니다.
 $ eksctl delete cluster --name k8s-demo
 2021-05-21 18:39:08 [ℹ]  eksctl version 0.50.0
 2021-05-21 18:39:08 [ℹ]  using region ap-northeast-2
@@ -184,4 +196,4 @@ $ eksctl delete cluster --name k8s-demo
 2021-05-21 18:42:55 [ℹ]  deleted serviceaccount "kube-system/aws-node"
 2021-05-21 18:42:56 [ℹ]  will delete stack "eksctl-k8s-demo-cluster"
 2021-05-21 18:42:56 [✔]  all cluster resources were deleted
-
+지우는 시간도 오래 걸려요~
