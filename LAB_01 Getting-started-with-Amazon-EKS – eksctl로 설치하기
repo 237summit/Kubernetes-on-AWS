@@ -16,6 +16,8 @@ AWS EKS 설치
   
   ubuntu $
 
+  ** 참고: WSL-ubuntu를 사용하지 않고, EC2 instance를 생성해서 k8s manage server로 사용할 수 있다.
+  
 2. Linux에 AWS CLI 버전 2 설치
   참고: https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/install-cliv2-linux.html
   $ sudo apt-get install -y unzip
