@@ -1,0 +1,270 @@
+Kubernetes Volume Example
+
+1. emptyDir을 사용하는 multi-pod
+1) smlinux/cowsay-web:latest
+  • nginx 웹 서버가 서비스할 web content를 생성하는 컨테이너 
+  • fortune을 실행해서 5초에 한번씩 /webdata/index.html 문서를 갱신
+  $ cat web-generator.sh 
+  #!/bin/bash
+  mkdir /webdata
+  while true
+  do
+    /usr/games/fortune | /usr/games/cowsay > /webdata/index.html
+    sleep 5
+  done
+
+  $ cat Dockerfile 
+  FROM ubuntu:latest
+  LABEL maintainer "seongmi lee <seongmi.lee@gmail.com>"
+  RUN apt-get update ; apt-get -y install fortune cowsay
+
+  ADD web-generator.sh  /bin/web-generator.sh
+  RUN chmod +x /bin/web-generator.sh
+  CMD ["/bin/web-generator.sh"]
+
+  # 컨테이너 실행결과- fortune 명령어는 random하게 격언/속담을 출력. cowsay 명령은은 전달하는 메시지를 cow의 say 메시지 그림으로 표현
+   _________________________________________
+  / You will stop at nothing to reach your  \
+  | objective, but only because your brakes |
+  \ are defective.                          /
+   -----------------------------------------
+          \   ^__^
+           \  (oo)\_______
+              (__)\       )\/\
+                  ||----w |
+                  ||     ||
+
+2) cowsay-web Pod는 cowsay-web 컨테이너가 생성한 web content를 nginx 컨테이너가 80포트를 통해 서비스 하도록 multi-container POD를 구성하였다. 아래와 같이 두개의 컨테이너가 공유 스토리지를 사용하도록 서비스를 생성해보자.
+  $ kubectl create -f volume-empty.yaml
+
+3) cowsay-web 포드의 IP 주소로 접속하여 서비스 실행 결과를 확인해보자.
+  $ kubectl  get pods -o wide
+  $ curl <IP_Address>
+
+4) 생성된 Pod의 세부 정보를 통해 마운트 상태를 확인해보자. 두 개의 컨테이너는 emptyDir로 정의된 임시 저장소를 각자 마운트하여 사용하고 있다. 
+  $ kubectl describe pod dynamic-web
+
+5) dynamic-web Pod내의 web-server 컨테이너의 마운트 디렉토리를 사용해보자. touch 명령으로 파일을 생성할 수 있는가? 
+  $ kubectl exec dynamic-web -c web-server -- ls /usr/share/nginx/html
+  $ kubectl exec dynamic-web -c web-server -- touch /usr/share/nginx/html/test.html
+
+6) fortune-cowsay-web 컨테이너는 mount를 RW가능하도록 설정하였다. 동일하게 touch 명령으로 파일이 생성되는지 확인해보자.
+  $ kubectl exec dynamic-web -c web-generator -- touch /webdata/test.txt
+  $ kubectl exec dynamic-web -c web-generator -- ls /webdata/
+
+7) emptyDir은 Pod가 실행되는 Node의 임시 디렉토리를 통해 volume을 운영한다. 아래의 명령을 통해 Pod에서 emptyDir의 상태를 확인해보자. 
+  $ kubectl exec dynamic-web -it -c web-generator -- /bin/bash
+  /# df -h
+  /# mount | grep webdata
+  /dev/mapper/centos-root on /webdata type xfs (rw,relatime,seclabel,attr2,inode64,noquota)
+
+  /# exit
+
+8) 생성한 Pod를 제거하자.
+  $ kubectl delete pod dynamic-web
+
+
+########################################
+2  HostPath를 사용하는 Pod 운영
+fluentd는 루비 기반으로 개발되었고, 다양한 플러그인 들을 사용할 수 있는 로그 수집기로  쿠버네티스가 아닌 환경에서도 많이 사용된다. CNCF 재단에 속해 있는 범용 로그 수집용 오픈소스 프로젝트이며 로그를 수집해서 다양한 외부 저장소로 보낼 수 있도록 되어 있지만 아래 예제는 쿠버네티스에서 발생한 로그들을 수집해서 elasticsearch로 저장하도록 하고 있다.
+https://github.com/fluent/fluentd-kubernetes-daemonset에서 쿠버네티스 배포용 yaml 파일 정보를 볼 수 있다. 
+
+1) volume-hostpath-fluentd.yaml을 보면 알 수 있듯이 node마다 동작하는 daemonSet 컨트롤러에 의해 운영되며, hostPath를 통해 docker의 로그 디렉토리를 fluented에게 전달하였다. 노드에서 실제 로그가 쌓이는 위치인 /var/log와 /var/lib/docker/containers를 볼륨으로 마운트 하여 시스템용 프로세스들의 로그를 수집한다. 특히 /var/lib/docker/containers에는 쿠버네티스에 띄워진 Pod들이 출력하는 로그가 쌓인다. 
+  $ cat volume-hostpath-fluentd.yaml
+  $ kubectl create -f volume-hostpath-fluentd.yaml
+
+2) kubectl get pods -o wide 명령으로 확인하면 동작중인 node에 Pod가 생성되었다. 
+  $ kubectl get pods -o wide -n kube-system
+
+3) pod 들이 마운트 상태를 확인해보자.
+  $ kubectl describe pod -n kube-system fluentd-elasticsearch-XXX
+    ...
+        Environment:  <none>
+        Mounts:
+          /var/lib/docker/containers from varlibdockercontainers (ro)
+          /var/log from varlog (rw)
+          /var/run/secrets/kubernetes.io/serviceaccount from default-token-4b4z5 (ro)
+    Conditions:
+      Type              Status
+      Initialized       True
+      Ready             True
+      ContainersReady   True
+      PodScheduled      True
+    Volumes:
+      varlog:
+        Type:          HostPath (bare host directory volume)
+        Path:          /var/log
+        HostPathType:
+      varlibdockercontainers:
+        Type:          HostPath (bare host directory volume)
+        Path:          /var/lib/docker/containers
+        HostPathType:
+      default-token-4b4z5:
+        Type:        Secret (a volume populated by a Secret)
+        SecretName:  default-token-4b4z5
+        Optional:    false
+
+4) fluentd 포드에 들어가서 실제로 거기에 로그가 쌓이고 있는지 확인해보자.
+  $ kubectl exec -n kube-system -it fluentd-elasticsearch-2dqfp -- bash
+  /# ls /var/log 
+  /# ls /var/lib/docker/containers
+  /# exit
+
+
+########################################
+3. AWS EBS를 이용한 서비스 : nodeSelector
+1) EBS 볼륨 생성하기
+  $ aws ec2 create-volume --availability-zone=ap-northeast-2a --size=10 --volume-type=gp2
+  {
+      "AvailabilityZone": "ap-northeast-2a",
+      "CreateTime": "2021-05-25T16:37:35+00:00",
+      "Encrypted": false,
+      "Size": 10,
+      "SnapshotId": "",
+      "State": "creating",
+      "VolumeId": "vol-0fc935f102c2e8b3a",
+      "Iops": 100,
+      "Tags": [],
+      "VolumeType": "gp2",
+      "MultiAttachEnabled": false
+  }
+
+
+2) AWS EBS는 동일 availability-zone에서만 적용할 수 있다. 아래와 같이  nodeSelector를 이용해서 EBS를 생성한 AZ에 있는 노드를 구분하자
+  $ kubectl label nodes ip-192-168-42-136.ap-northeast-2.compute.internal az=ap-northeast-2a
+  $ kubectl label nodes ip-192-168-70-214.ap-northeast-2.compute.internal az=ap-northeast-2c
+  $ kubectl label nodes ip-192-168-5-214.ap-northeast-2.compute.internal az=ap-northeast-2b
+  $ kubectl get nodes -L az
+  NAME                                                STATUS   ROLES     AGE   VERSION               AZ
+  ip-192-168-42-136.ap-northeast-2.compute.internal   Ready    <none>   35h   v1.19.6-eks-49a6c0   ap-northeast-2a
+  ip-192-168-5-214.ap-northeast-2.compute.internal    Ready    <none>   35h   v1.19.6-eks-49a6c0   ap-northeast-2b
+  ip-192-168-70-214.ap-northeast-2.compute.internal   Ready    <none>   35h   v1.19.6-eks-49a6c0   ap-northeast-2c
+
+
+3) EBS 볼륨을 사용하는 Pod 생성
+container가 AZ=ap-northeast-2a의 워커 노드에서 실행되도록 nodeSelector를 구성하여 pod를 동작 시키자.
+  $ cat volume-ebs.yaml
+
+4) 서비스 생성
+  $ kubectl expose pod test-ebs --type=LoadBalancer --selector=app=web
+  $ kubectl get svc
+  NAME         TYPE               CLUSTER-IP     EXTERNAL-IP                                                                                                  PORT(S)          AGE
+  kubernetes   ClusterIP         10.100.0.1       <none>                                                                                                          443/TCP         38h
+  test-ebs       LoadBalancer   10.100.13.15     a70c564dcdb90410eb18567effbb0e4a-1341969458.ap-northeast-2.elb.amazonaws.com   80:31886/TCP   123m
+
+
+  $ curl a70c564dcdb90410eb18567effbb0e4a-1341969458.ap-northeast-2.elb.amazonaws.com
+  <html>
+  <head><title>403 Forbidden</title></head>
+  <body bgcolor="white">
+  <center><h1>403 Forbidden</h1></center>
+  <hr><center>nginx/1.14.2</center>
+  </body>
+  </html>
+
+5) Pod에 접속하여 html 문서 생성하기
+  $ kubectl exec test-ebs -it -- /bin/bash
+  root@test-ebs:/# cd /usr/share/nginx/html/
+  root@test-ebs:/usr/share/nginx/html# ls
+  lost+found
+  root@test-ebs:/usr/share/nginx/html# cat > index.html
+  <h1>Bespin Global</h1>
+  root@test-ebs:/usr/share/nginx/html# exit
+  exit
+
+  웹서비스 결과 확인
+  $ curl a70c564dcdb90410eb18567effbb0e4a-1341969458.ap-northeast-2.elb.amazonaws.com
+  <h1>Bespin Global</h1>
+
+
+6) 질문: test-ebs 파드를 삭제하고 다시 create 했다. curl 명령 실행 시 어떤 결과가 나올까?
+  $ kubectl delete pod test-ebs
+  $ kubectl create –f volume-ebs.yaml
+  $ curl a70c564dcdb90410eb18567effbb0e4a-1341969458.ap-northeast-2.elb.amazonaws.com
+  <결과는?>
+
+7) worker Node EC2 시스템에서 본 EBS는?
+  root@ip-192-168-42-136 ~]# lsblk
+  NAME          MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+  ...
+  nvme1n1       259:3    0  10G  0 disk /var/lib/kubelet/pods/266981b8-f9ed-4c5f-9c3f-9e7e04d79bed/volumes/kubernetes.i~aws-ebs/test-volume
+
+
+  [root@ip-192-168-42-136 ~]# df -hT
+  /dev/nvme1n1   ext4      9.8G   37M  9.7G   1% /var/lib/kubelet/plugins/kubernetes.io/aws-ebs/mounts/vol-07ab4a74f151ea1d1
+
+참고: https://kubernetes.io/ko/docs/concepts/storage/volumes/#gcepersistentdisk
+참고: https://kubernetes.io/ko/docs/concepts/storage/volumes/#awselasticblockstore
+참고: https://docs.aws.amazon.com/cli/latest/reference/ec2/create-volume.html
+
+########################################
+4. PV, PVC
+
+
+########################################
+5. NFS 볼륨 사용예
+nginx web 서비스를 배포하는데, Pod 확장 시에도 동일 웹페이지를 서비스 할 수 있도록 구성해 보자.
+1) NFS server에는 web content가 저장되어 있다. 
+다음과 같은 명령을 실행하여 NFS 공유 스토리지에 저장된 web content를 확인해보라.
+$ cat /sharedir/webdata/index.html
+<h1>TEST WEB</h1>
+
+2) NFS server가 제공하는 공유 스토리지를 사용하는 nginx 웹 서버를 배포하자.
+$ cat volume-nfs.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - image: nginx:1.14
+        name: nginx-container
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html
+          name: html
+
+      volumes:
+      - name: html
+        nfs:
+          server: 10.100.0.254
+          path: /sharedir/webdata
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-svc
+spec:
+  selector:
+    app: web
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  type: LoadBalancer
+  
+$ kubectl create -f volume-nfs.yaml 
+
+3) 동작되는 Pod의 마운트 상태를 확인해보자.
+$ kubectl get pods
+$ kubectl describe pod web-server-85586c86c5-tvjrw
+
+4) Service IP를 통해 공유 스토리지의 컨텐츠를 제공하는지 확인해보자.
+$ kubectl get pod -o wide
+
+5) kubectl scale 명령을 통해 Pod 개수를 확장 및 축소했을 때도 동일한 웹페이지가 서비스되는지 확인해보자.
+
+
+########################################
+4. PersistentVolume, PersistentVolumeClaim 사용
+1) pvc 생성하기
