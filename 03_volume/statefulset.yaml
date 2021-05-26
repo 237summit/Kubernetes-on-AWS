@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: StatefulSet 
+metadata:
+  name: appstore
+spec:
+  replicas: 3
+  serviceName: appstore-svc
+  selector:
+    matchLabels:
+      app: appstore
+  
+  template:
+    metadata:
+      labels:
+        app: appstore
+    spec:
+      containers:
+      - name: app-container
+        image: smlinux/app-store
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: data
+          mountPath: /var/data
+
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      storageClassName: aws-efs
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: appstore-svc
+spec:
+  selector:
+    app: appstore
+  ports:
+  - port: 80
+    targetPort: 8080
+
+

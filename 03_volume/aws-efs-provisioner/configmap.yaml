@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: efs-provisioner
+data:
+  file.system.id: fs-c1bc0ea1
+  aws.region: ap-northeast-2
+  provisioner.name: bespinglobal.com/aws-efs
+  dns.name: ""
