@@ -6,3 +6,5 @@
 ### 4. Kubernetes CNI
 ### 5. kube-proxy
 ### 6. Kubernetes Service
+### 7. Kubernetes Volume
+### 8. StatefulSet
