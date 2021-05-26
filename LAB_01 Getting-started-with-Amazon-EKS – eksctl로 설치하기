@@ -174,7 +174,6 @@ webtest-fdf54587f-pn549   1/1     Running   0          28s   192.168.83.249   ip
 nginx 웹서버에 클라이언트 접속 가능하도록 구성하고 간단히 TEST
 $ kubectl expose deployment  webtest --port=80 --type=LoadBalancer
 $ kubectl get services
-$ kubectl get services
 NAME         TYPE           CLUSTER-IP      EXTERNAL-IP                                                                    PORT(S)        AGE
 kubernetes   ClusterIP      10.100.0.1      <none>                                                                         443/TCP        33h
 webtest      LoadBalancer   10.100.222.89   ab5190278c9ac491cb45a4bc42a6d689-1608401336.ap-northeast-2.elb.amazonaws.com   80:30331/TCP   31s
