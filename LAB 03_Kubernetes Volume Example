@@ -202,6 +202,11 @@ container가 AZ=ap-northeast-2a의 워커 노드에서 실행되도록 nodeSelec
 
 
 ########################################
+yum install -y amazon-efs-utils
+cd /
+mkdir efs
+sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport fs-c1bc0ea1.efs.ap-northeast-2.amazonaws.com:/ efs
+    
 5. NFS 볼륨 사용예
 nginx web 서비스를 배포하는데, Pod 확장 시에도 동일 웹페이지를 서비스 할 수 있도록 구성해 보자.
 1) NFS server에는 web content가 저장되어 있다. 
