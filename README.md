@@ -8,3 +8,5 @@
 ### 6. Kubernetes Service
 ### 7. Kubernetes Volume
 ### 8. StatefulSet
+### 9. Rolling Update
+### 10. HPA and VPA
