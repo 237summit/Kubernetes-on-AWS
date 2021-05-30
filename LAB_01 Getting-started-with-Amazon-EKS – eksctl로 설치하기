@@ -19,7 +19,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
   ubuntu $
 
 
-2. Linux에 AWS CLI 버전 2 설치
+2. EKS 관리 시스템(ubuntu Linux)에 AWS CLI 관리툴인 aws
   참고: https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/install-cliv2-linux.html
   $ sudo apt-get install -y unzip
   $ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -29,7 +29,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
   $ aws --version
   aws-cli/2.2.5 Python/3.8.8 Linux/4.4.0-19041-Microsoft exe/x86_64.ubuntu.20 prompt/off
 
-3. eksctl 설치
+3. EKS 관리 시스템(ubuntu Linux)에 EKS설치/운영 툴인  eksctl 설치
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/eksctl.html
   $ curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
   $ sudo mv /tmp/eksctl /usr/local/bin
@@ -37,7 +37,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
   0.50.0
 
 
-4.  kubectl 설치
+4. EKS 관리 시스템(ubuntu Linux)에 k8s 관리툴인 kubectl 설치
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/install-kubectl.html
   $ curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
   $ chmod +x ./kubectl
@@ -49,7 +49,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
 
 5. AWS IAM 생성하기 
   링크: aws.amazon.com - root 로그인후 IAM 생성
-  사용자이름(User name*) : test-user
+  사용자이름(User name*) : eks-mng-user
   프로그래밍 방식(Programmatic access) 선택
   기존 정책(Attach existing policies directly) : administrator
   태그 추가(Add tags (optional)) - <SKIP>
@@ -59,7 +59,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
 
 
 
-6. aws 설정하기 : ubuntu에서
+6. 관리시스템(ubuntu)에서 aws 관리할수 있도록 aws 계정(eks-mng-user) 등록
   $ aws configure
   AWS Access Key ID [None]: AKIASJ...E37V
   AWS Secret Access Key [None]: XLzhAqt...7g
@@ -85,9 +85,9 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
   }
 
 
-7. EC2 연결을 위한 키를 생성한다.
- 방법1: AWS에서 ssh를 생성하거나 아래의 명령을 실행해 demo-k8skey 키를 생성한다. 키 생성시 만들어지는 pem은 잘 저장한후 ssh 접속시 사용한다.
- 방법2: aws ec2 create-key-pair --region ap-northeast-2 --key-name test-k8skey --output text > demo-k8skey.pem
+7. WINDOWS 10의 WSL에서 관리시스템을 생성해서 운영중인 경우 아래와 같이 EC2 연결을 위한 키를 생성한다.
+ 방법1: AWS에서 ssh를 생성하거나 아래의 명령을 실행해 aws--login-key 키를 생성한다. 키 생성시 만들어지는 pem은 잘 저장한후 ssh 접속시 사용한다.
+ 방법2: aws ec2 create-key-pair --region ap-northeast-2 --key-name test-k8skey --output text > aws--login-key
 
 8. EKS 구성
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/getting-started-eksctl.html
@@ -99,7 +99,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
     --region ap-northeast-2 \
     --with-oidc \
     --ssh-access \
-    --ssh-public-key demo-k8skey \
+    --ssh-public-key aws--login-key \
     --nodes 3 \
     --node-type t3.medium \
     --node-volume-size=20 \
