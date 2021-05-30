@@ -1,11 +1,13 @@
-AWS EKS 설치
+eksctl 명령을 이용해서 AWS EKS 생성하기
 
-1. 윈도우 10 에서 WSL(Ubuntu)로 AWSCLI 실행하기
+1. 관리 서버 준비
+방법1: AWS EC2 instance를 생성해서 k8s manage server로 사용
+방법2: 윈도우 10에서 WSL, Ubuntu를 사용
+
   1) WSL 설치
   PowerShell을 관리자 권한으로 실행
   아래 명령어를 입력한 후 엔터
   > Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
-
   설치후에 시스템 리부팅 진행
 
   2) 마이크로 소프트 스토어에서 "Ubuntu" 설치 후 실행해서 계정생성-> root 계정 패스워드 설정
@@ -16,8 +18,7 @@ AWS EKS 설치
   
   ubuntu $
 
-  ** 참고: WSL-ubuntu를 사용하지 않고, EC2 instance를 생성해서 k8s manage server로 사용할 수 있다.
-  
+
 2. Linux에 AWS CLI 버전 2 설치
   참고: https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/install-cliv2-linux.html
   $ sudo apt-get install -y unzip
