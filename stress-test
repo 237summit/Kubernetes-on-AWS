@@ -1,0 +1,15 @@
+          limits:
+            cpu: "1"
+            memory: "500Mi"
+          requests:
+            cpu: "0.5"
+            memory: "250Mi"
+        args:
+        - -cpus
+        - "1"
+        - -mem-total
+        - "700Mi"
+        - -mem-alloc-size
+        - "100Mi"
+        - -mem-alloc-sleep
+        - "1s"
