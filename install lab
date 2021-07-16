@@ -1,9 +1,12 @@
 eksctl 명령을 이용해서 AWS EKS 생성하기
 
-1. 관리 서버 준비
-방법1: AWS EC2 instance를 생성해서 k8s manage server로 사용
-방법2: 윈도우 10에서 WSL, Ubuntu를 사용
+1. Bastion 호스트 준비
+배스천 호스트(Bastion Host)란 침입 차단 소프트웨어가 설치되어 내부와 외부 네트워크 사이에서 일종의 게이트 역할을 수행하는 호스트를 뜻함.
+참고 : https://aws.amazon.com/ko/quickstart/architecture/linux-bastion/
 
+방법1: AWS EC2 instance를 생성해서 k8s manage server로 사용
+
+방법2: 윈도우 10에서 WSL, Ubuntu를 사용
   1) WSL 설치
   PowerShell을 관리자 권한으로 실행
   아래 명령어를 입력한 후 엔터
@@ -19,7 +22,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
   ubuntu $
 
 
-2. EKS 관리 시스템(ubuntu Linux)에 AWS CLI 관리툴인 aws
+2. Bastion Host(ubuntu Linux)에 AWS CLI 관리툴인 aws
   참고: https://docs.aws.amazon.com/ko_kr/cli/latest/userguide/install-cliv2-linux.html
   $ sudo apt-get install -y unzip
   $ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -29,7 +32,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
   $ aws --version
   aws-cli/2.2.5 Python/3.8.8 Linux/4.4.0-19041-Microsoft exe/x86_64.ubuntu.20 prompt/off
 
-3. EKS 관리 시스템(ubuntu Linux)에 EKS설치/운영 툴인  eksctl 설치
+3. Bastion Host(ubuntu Linux)에 EKS설치/운영 툴인  eksctl 설치
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/eksctl.html
   $ curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
   $ sudo mv /tmp/eksctl /usr/local/bin
@@ -37,7 +40,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
   0.50.0
 
 
-4. EKS 관리 시스템(ubuntu Linux)에 k8s 관리툴인 kubectl 설치
+4. Bastion Host(ubuntu Linux)에 k8s 관리툴인 kubectl 설치
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/install-kubectl.html
   $ curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
   $ chmod +x ./kubectl
@@ -59,7 +62,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
 
 
 
-6. 관리시스템(ubuntu)에서 aws 관리할수 있도록 aws 계정(eks-mng-user) 등록
+6. Bastion Host(ubuntu)에서 aws 관리할수 있도록 aws 계정(eks-mng-user) 등록
   $ aws configure
   AWS Access Key ID [None]: AKIASJ...E37V
   AWS Secret Access Key [None]: XLzhAqt...7g
