@@ -3,8 +3,8 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
 1. Bastion 호스트 준비
 배스천 호스트(Bastion Host)란 침입 차단 소프트웨어가 설치되어 내부와 외부 네트워크 사이에서 일종의 게이트 역할을 수행하는 호스트를 뜻함.
 참고 : https://aws.amazon.com/ko/quickstart/architecture/linux-bastion/
-      https://aws.amazon.com/ko/quickstart/architecture/linux-bastion/
-
+      https://blog.naver.com/pentamkt/221034903499
+   
 방법1: AWS EC2 instance를 생성해서 k8s manage server로 사용
 
 방법2: 윈도우 10에서 WSL, Ubuntu를 사용
