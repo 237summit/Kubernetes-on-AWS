@@ -11,4 +11,4 @@ spec:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - {key: disktype, operator: In, values: ["ssd"]}
+          - {key: KEY, operator: In, values: ["VALUE"]}
