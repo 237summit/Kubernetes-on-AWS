@@ -9,5 +9,4 @@ spec:
     ports:
     - containerPort: 8888
       protocol: TCP
-  nodeSelector:
-    gpu: "true"
+
