@@ -5,7 +5,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
 참고 : https://aws.amazon.com/ko/quickstart/architecture/linux-bastion/
       https://blog.naver.com/pentamkt/221034903499
    
-방법1: AWS EC2 instance를 생성해서 k8s manage server로 사용
+방법1: AWS EC2 instance를 생성해서 Bastion Server로 사용
 
 방법2: 윈도우 10에서 WSL, Ubuntu를 사용
   1) WSL 설치
@@ -31,19 +31,19 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
   $ sudo ./aws/install
 	  You can now run: /usr/local/bin/aws --version
   $ aws --version
-  aws-cli/2.2.5 Python/3.8.8 Linux/4.4.0-19041-Microsoft exe/x86_64.ubuntu.20 prompt/off
-
+  aws-cli/2.7.11 Python/3.9.11 Linux/5.13.0-1029-aws exe/x86_64.ubuntu.20 prompt/off
+  
 3. Bastion Host(ubuntu Linux)에 EKS설치/운영 툴인  eksctl 설치
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/eksctl.html
   $ curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
   $ sudo mv /tmp/eksctl /usr/local/bin
   $ eksctl version
-  0.50.0
+  0.103.0
 
 
 4. Bastion Host(ubuntu Linux)에 k8s 관리툴인 kubectl 설치
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/install-kubectl.html
-  $ curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+  $ curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
   $ chmod +x ./kubectl
   $ mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
   $ echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
@@ -55,7 +55,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
   링크: aws.amazon.com - root 로그인후 IAM 생성
   사용자이름(User name*) : eks-mng-user
   프로그래밍 방식(Programmatic access) 선택
-  기존 정책(Attach existing policies directly) : administrator
+  기존 정책(Attach existing policies directly) : AdministratorAccess
   태그 추가(Add tags (optional)) - <SKIP>
   [사용자만들기(Create User)] 버튼 클릭
   
@@ -69,18 +69,17 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
   Default region name [None]: ap-northeast-2
   Default output format [None]: <ENTER>
 
-  ubuntu@seongmi_lee:~$ cd .aws/
-  ubuntu@seongmi_lee:~/.aws$ ls
-  ubuntu@seongmi_lee:~/.aws$ cat config
+  $ cat .aws/config
   [default]
   region = ap-northeast-2
-  ubuntu@seongmi_lee:~/.aws$ cat credentials
+  
+  $ cat .aws/credentials
   [default]
   aws_access_key_id = AKIASJ...E37V
   aws_secret_access_key = XLzhAq...7g
 
   잘 연결되는지 확인
-  ubuntu@seongmi_lee:~/.aws$ aws sts get-caller-identity
+  $ aws sts get-caller-identity
   {
       "UserId": "AID...KS26",
       "Account": "15..75",
@@ -94,7 +93,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
 
 8. EKS 구성
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/getting-started-eksctl.html
-  EKS요금 시간당 0.01USD  + t3.medium 시간 0.416 *2 USD 입니다.
+  EKS요금 시간당 0.10USD  + t3.medium 시간 0.416 *2 USD 입니다.
   [Managed nodes – Linux] 탭 선택후 사용설명확인
  eksctl 명령을 실행해서 Amazon EKS 클러스터를 생성한다.  
   $ eksctl create cluster \
