@@ -35,20 +35,22 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
   
 3. Bastion Host(ubuntu Linux)에 EKS설치/운영 툴인  eksctl 설치
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/eksctl.html
-  $ curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-  $ sudo mv /tmp/eksctl /usr/local/bin
-  $ eksctl version
-  0.103.0
+ARCH=amd64
+PLATFORM=$(uname -s)_$ARCH
+curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$PLATFORM.tar.gz"
+# (Optional) Verify checksum
+curl -sL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_checksums.txt" | grep $PLATFORM | sha256sum --check
+tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
+sudo mv /tmp/eksctl /usr/local/bin
 
 
 4. Bastion Host(ubuntu Linux)에 k8s 관리툴인 kubectl 설치
   참고: https://docs.aws.amazon.com/ko_kr/eks/latest/userguide/install-kubectl.html
-  $ curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
-  $ chmod +x ./kubectl
-  $ mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
-  $ echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
-  $ kubectl version --short --client
-  Client Version: v1.19.6-eks-49a6c0
+curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.27.1/2023-04-19/bin/linux/amd64/kubectl
+chmod +x ./kubectl
+mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$HOME/bin:$PATH
+echo 'export PATH=$HOME/bin:$PATH' >> ~/.bashrc
+kubectl version --short --client
 
 
 5. AWS IAM 생성하기 
@@ -63,28 +65,20 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
 
 
 6. Bastion Host(ubuntu)에서 aws 관리할수 있도록 aws 계정(eks-mng-user) 등록
-  $ aws configure
-  AWS Access Key ID [None]: AKIASJ...E37V
-  AWS Secret Access Key [None]: XLzhAqt...7g
-  Default region name [None]: ap-northeast-2
-  Default output format [None]: <ENTER>
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+aws --version
 
-  $ cat .aws/config
-  [default]
-  region = ap-northeast-2
-  
-  $ cat .aws/credentials
-  [default]
-  aws_access_key_id = AKIASJ...E37V
-  aws_secret_access_key = XLzhAq...7g
+# AWS 관리콘솔 -> IAM -> 사용자 -> 계정선택 -> 보안자격증명 > 액세스 키 만들기 -> CLI -> 액세스키, 비밀액세스키 저장
+aws configure
+AWS Access Key ID [None]: 액세스키
+AWS Secret Access Key [None]: 비밀_액세스키
+Default region name [None]: ap-northeast-2
+Default output format [None]: <Enter>
 
-  잘 연결되는지 확인
-  $ aws sts get-caller-identity
-  {
-      "UserId": "AID...KS26",
-      "Account": "15..75",
-      "Arn": "arn:aws:iam::158208647875:user/k8suser-console"
-  }
+# aws 연결 arn 확인
+aws sts get-caller-identity
 
 
 7. WINDOWS 10의 WSL에서 관리시스템을 생성해서 운영중인 경우 아래와 같이 EC2 연결을 위한 키를 생성한다.
@@ -148,7 +142,7 @@ eksctl 명령을 이용해서 AWS EKS 생성하기
 
 9. 설치완료되면 다음과 같이 설치 결과 확인하고, CLI 명령어 자동완성 기능을 추가
 - kubectl 명령으로 설치결과 확인
-$ kubectl get nodes
+kubectl get nodes
 NAME                                                STATUS   ROLES    AGE   VERSION
 ip-192-168-38-198.ap-northeast-2.compute.internal   Ready    <none>   28m   v1.19.6-eks-49a6c0
 ip-192-168-4-22.ap-northeast-2.compute.internal     Ready    <none>   28m   v1.19.6-eks-49a6c0
@@ -156,17 +150,17 @@ ip-192-168-82-229.ap-northeast-2.compute.internal   Ready    <none>   28m   v1.1
 
 
 CLI 명령어 완성기능 추가
-$ source <(kubectl completion bash)
-$ echo "source <(kubectl completion bash)" >> ~/.bashrc
+source <(kubectl completion bash)
+echo "source <(kubectl completion bash)" >> ~/.bashrc
 
 
 10. 간단한 실행 실습
 워커 노드 정보 보기
-$ kubectl get nodes -o wide
+kubectl get nodes -o wide
 
 Pod 배포 TEST. nginx 컨테이너 5개 실행하고 결과 확인
-$ kubectl create  deployment webtest --image=nginx:1.14 --port=80  --replicas=5
-$ kubectl get  pods -o wide
+kubectl create  deployment webtest --image=nginx:1.14 --port=80  --replicas=5
+kubectl get  pods -o wide
 NAME                      READY   STATUS    RESTARTS   AGE   IP               NODE                                               NOMINATED NODE   READINESS GATES
 webtest-fdf54587f-8mfrz   1/1     Running   0          28s   192.168.10.139   ip-192-168-2-91.ap-northeast-2.compute.internal    <none>           <none>
 webtest-fdf54587f-d4pjc   1/1     Running   0          28s   192.168.39.104   ip-192-168-56-22.ap-northeast-2.compute.internal   <none>           <none>
